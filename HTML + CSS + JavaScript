@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mines Predictor</title>
+  <style>
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 50px);
+      gap: 5px;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cell.revealed {
+      background-color: #f00;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mines Predictor</h1>
+  <input type="text" id="clientSeed" placeholder="Enter Client Seed" />
+  <input type="number" id="minesCount" placeholder="Number of Mines (1-24)" min="1" max="24" />
+  <button id="playButton">Play</button>
+  <div class="grid" id="grid"></div>
+  <script>
+    const grid = document.getElementById('grid');
+    const clientSeed = document.getElementById('clientSeed');
+    const minesCount = document.getElementById('minesCount');
+    const playButton = document.getElementById('playButton');
+
+    // Initialize grid
+    function initGrid() {
+      grid.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        grid.appendChild(cell);
+      }
+    }
+
+    // Fetch mines from backend
+    async function fetchMines() {
+      const seed = clientSeed.value;
+      const count = parseInt(minesCount.value);
+
+      if (!seed || count < 1 || count > 24) {
+        alert('Please enter a valid client seed and mines count (1-24).');
+        return;
+      }
+
+      const response = await fetch('/generate-mines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientSeed: seed, minesCount: count }),
+      });
+      const data = await response.json();
+      return data.mines;
+    }
+
+    // Reveal mines on grid
+    function revealMines(mines) {
+      mines.forEach((mine) => {
+        const cell = grid.children[mine];
+        cell.classList.add('revealed');
+      });
+    }
+
+    // Play button click
+    playButton.addEventListener('click', async () => {
+      initGrid();
+      const mines = await fetchMines();
+      revealMines(mines);
+    });
+
+    initGrid();
+  </script>
+</body>
+</html>
